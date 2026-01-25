@@ -75,11 +75,20 @@ export const useAuthStore = create<AuthState>()(
                 .order("name");
 
               if (orgsError || !allOrgs || allOrgs.length === 0) {
+                console.error("Superadmin but no orgs found:", orgsError);
                 set({
-                  user: null,
+                  user: {
+                    id: session.user.id,
+                    email: session.user.email || "",
+                    organization_id: undefined,
+                    team_id: undefined,
+                    role: "admin",
+                    name: session.user.user_metadata?.name,
+                    is_superadmin: true,
+                  },
                   memberships: [],
                   organization: null,
-                  isAuthenticated: false,
+                  isAuthenticated: true,
                   isLoading: false,
                 });
                 return;
@@ -117,12 +126,46 @@ export const useAuthStore = create<AuthState>()(
                 )
                 .eq("user_id", session.user.id);
 
-              if (teamError || !teamMembers || teamMembers.length === 0) {
+              if (teamError) {
+                console.error("Error fetching team members:", teamError);
+                // On error, still mark as authenticated but with no org
+                // This prevents redirect loops
                 set({
-                  user: null,
+                  user: {
+                    id: session.user.id,
+                    email: session.user.email || "",
+                    organization_id: undefined,
+                    team_id: undefined,
+                    role: "owner",
+                    name: session.user.user_metadata?.name,
+                    is_superadmin: false,
+                  },
                   memberships: [],
                   organization: null,
-                  isAuthenticated: false,
+                  isAuthenticated: true, // Keep authenticated to prevent loop
+                  isLoading: false,
+                  error: "Failed to load organization data",
+                });
+                return;
+              }
+
+              if (!teamMembers || teamMembers.length === 0) {
+                // User is authenticated but has no organization yet
+                // This can happen during onboarding
+                console.log("User has no team memberships yet");
+                set({
+                  user: {
+                    id: session.user.id,
+                    email: session.user.email || "",
+                    organization_id: undefined,
+                    team_id: undefined,
+                    role: "owner",
+                    name: session.user.user_metadata?.name,
+                    is_superadmin: false,
+                  },
+                  memberships: [],
+                  organization: null,
+                  isAuthenticated: true, // Keep authenticated
                   isLoading: false,
                 });
                 return;
