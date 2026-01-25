@@ -132,11 +132,12 @@ export const signInWithGoogle = async (redirectTo?: string) => {
   return data;
 };
 
-// Check if user needs tenant provisioning (for OAuth users)
+// Check if user needs tenant provisioning (for OAuth and email verification)
 export const checkAndProvisionTenant = async (
   userId: string,
   email: string,
   companyName?: string,
+  templateSlug?: string,
 ) => {
   // Check if user already has an organization
   const { data: existingMember } = await supabase
@@ -155,15 +156,12 @@ export const checkAndProvisionTenant = async (
     };
   }
 
-  // User needs provisioning - use email domain as default company name if not provided
-  const defaultCompanyName =
-    companyName || email.split("@")[1]?.split(".")[0] || "My Company";
-
+  // User needs provisioning
   const { data, error } = await supabase.rpc("provision_tenant", {
     p_user_id: userId,
     p_email: email,
-    p_company_name: defaultCompanyName,
-    p_template_slug: "custom",
+    p_company_name: companyName || "My Company",
+    p_template_slug: templateSlug || "custom",
   });
 
   if (error) {

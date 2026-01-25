@@ -20,12 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  supabase,
-  signUp,
-  provisionTenant,
-  signInWithGoogle,
-} from "@/lib/supabase";
+import { supabase, signUp, signInWithGoogle } from "@/lib/supabase";
 import { toast } from "sonner";
 
 // Google icon component
@@ -169,12 +164,14 @@ export function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Step 1: Create auth user with email verification
+      // Create auth user with email verification
+      // Note: Tenant will be provisioned after email verification via AuthCallback
       const { user } = await signUp(email, password, {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        emailRedirectTo: `${window.location.origin}/sales/auth/callback`,
         data: {
           company_name: companyName,
           template: selectedTemplate,
+          primary_language: primaryLanguage,
         },
       });
 
@@ -182,26 +179,8 @@ export function SignupPage() {
         throw new Error("Failed to create user account");
       }
 
-      // Step 2: Provision tenant atomically
-      const result = await provisionTenant(
-        user.id,
-        email,
-        companyName,
-        selectedTemplate,
-      );
-
-      if (!result.success) {
-        // Handle specific errors
-        if (result.error === "organization_name_exists") {
-          setError(
-            "An organization with this name already exists. Did you mean to log in?",
-          );
-          return;
-        }
-        throw new Error(result.message || "Failed to create organization");
-      }
-
       // Success - show email verification message
+      // Tenant will be provisioned when user clicks the verification link
       setEmailSent(true);
       toast.success("Account created! Please check your email to verify.");
     } catch (err) {

@@ -29,10 +29,19 @@ export function AuthCallbackPage() {
         const user = session.user;
 
         // Check if this is a new user that needs tenant provisioning
+        // For email signups, company_name and template come from user_metadata
+        // For OAuth, we use email domain as fallback
+        const companyName =
+          user.user_metadata?.company_name ||
+          user.email?.split("@")[1]?.split(".")[0] ||
+          "My Company";
+        const templateSlug = user.user_metadata?.template || "custom";
+
         const result = await checkAndProvisionTenant(
           user.id,
           user.email || "",
-          user.user_metadata?.company_name,
+          companyName,
+          templateSlug,
         );
 
         if (!result.success) {
