@@ -385,9 +385,26 @@ export const useAuthStore = create<AuthState>()(
 
 // Listen for auth state changes
 supabase.auth.onAuthStateChange((event, session) => {
+  console.log("[AuthStore] Auth state change:", event);
   if (event === "SIGNED_OUT") {
-    useAuthStore.getState().logout();
+    // Don't call logout() again - just reset state directly to avoid loops
+    useAuthStore.setState({
+      user: null,
+      memberships: [],
+      organization: null,
+      selectedOrgId: null,
+      selectedTeamId: null,
+      teams: [],
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+    });
   } else if (event === "SIGNED_IN" && session) {
     useAuthStore.getState().initialize();
+  } else if (event === "TOKEN_REFRESHED") {
+    // Token refreshed, no action needed
+  } else if (event === "INITIAL_SESSION") {
+    // Initial session check - initialize will handle this
+    console.log("[AuthStore] Initial session:", session ? "exists" : "none");
   }
 });
