@@ -2,8 +2,9 @@
   "framework": "vite",
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
-    { "source": "/sales/assets/:path*", "destination": "/sales/assets/:path*" },
-    { "source": "/sales/(.*)", "destination": "/sales/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/sales/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/sales/vite.svg", "destination": "/vite.svg" },
+    { "source": "/sales", "destination": "/index.html" },
+    { "source": "/sales/(.*)", "destination": "/index.html" }
   ]
 }
