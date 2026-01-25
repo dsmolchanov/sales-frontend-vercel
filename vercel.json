@@ -1,5 +1,9 @@
 {
   "framework": "vite",
   "installCommand": "npm install --legacy-peer-deps",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [
+    { "source": "/sales/assets/:path*", "destination": "/sales/assets/:path*" },
+    { "source": "/sales/(.*)", "destination": "/sales/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
