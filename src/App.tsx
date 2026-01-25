@@ -21,6 +21,7 @@ import { AcceptInvitationPage } from "@/pages/AcceptInvitation";
 import { ResetPasswordPage } from "@/pages/ResetPassword";
 import { SignupPage } from "@/pages/Signup";
 import { OnboardingPage } from "@/pages/Onboarding";
+import { AuthCallbackPage } from "@/pages/AuthCallback";
 
 // Protected route wrapper
 function ProtectedRoute() {
@@ -115,6 +116,9 @@ export default function App() {
 
           {/* Reset password - accessible without auth */}
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* OAuth callback - handles Google auth redirect */}
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
           {/* Catch all - redirect to dashboard */}
           <Route path="*" element={<Navigate to="/" replace />} />

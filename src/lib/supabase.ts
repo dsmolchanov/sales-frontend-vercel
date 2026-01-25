@@ -83,21 +83,19 @@ export const provisionTenant = async (
   email: string,
   companyName: string,
   templateSlug: string = "custom",
-  primaryLanguage: string = "en",
 ) => {
   const { data, error } = await supabase.rpc("provision_tenant", {
     p_user_id: userId,
     p_email: email,
     p_company_name: companyName,
     p_template_slug: templateSlug,
-    p_primary_language: primaryLanguage,
   });
 
   if (error) {
     throw error;
   }
 
-  return data;
+  return { success: true, ...data };
 };
 
 // Helper to reset password
@@ -114,4 +112,64 @@ export const resetPassword = async (email: string) => {
 export const getAccessToken = async (): Promise<string | null> => {
   const session = await getSession();
   return session?.access_token ?? null;
+};
+
+// Helper to sign in with Google OAuth
+export const signInWithGoogle = async (redirectTo?: string) => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectTo || `${window.location.origin}/sales/auth/callback`,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
+    },
+  });
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+// Check if user needs tenant provisioning (for OAuth users)
+export const checkAndProvisionTenant = async (
+  userId: string,
+  email: string,
+  companyName?: string,
+) => {
+  // Check if user already has an organization
+  const { data: existingMember } = await supabase
+    .schema("sales")
+    .from("team_members")
+    .select("organization_id")
+    .eq("user_id", userId)
+    .single();
+
+  if (existingMember?.organization_id) {
+    // User already has an org, return it
+    return {
+      success: true,
+      organization_id: existingMember.organization_id,
+      already_exists: true,
+    };
+  }
+
+  // User needs provisioning - use email domain as default company name if not provided
+  const defaultCompanyName =
+    companyName || email.split("@")[1]?.split(".")[0] || "My Company";
+
+  const { data, error } = await supabase.rpc("provision_tenant", {
+    p_user_id: userId,
+    p_email: email,
+    p_company_name: defaultCompanyName,
+    p_template_slug: "custom",
+  });
+
+  if (error) {
+    console.error("Tenant provisioning error:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, ...data };
 };
