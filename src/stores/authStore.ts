@@ -45,20 +45,43 @@ export const useAuthStore = create<AuthState>()(
       initialize: async () => {
         try {
           set({ isLoading: true, error: null });
+          console.log("[AuthStore] Starting initialization...");
 
           const {
             data: { session },
+            error: sessionError,
           } = await supabase.auth.getSession();
 
+          if (sessionError) {
+            console.error("[AuthStore] Session error:", sessionError);
+            set({
+              user: null,
+              memberships: [],
+              organization: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: sessionError.message,
+            });
+            return;
+          }
+
+          console.log("[AuthStore] Session:", session ? "exists" : "none");
+
           if (session?.user) {
+            console.log("[AuthStore] User ID:", session.user.id);
+
             // First check if user is a superadmin
-            const { data: superadminCheck } = await supabase
+            const { data: superadminCheck, error: saError } = await supabase
               .schema("sales")
               .from("team_members")
               .select("id, is_superadmin")
               .eq("user_id", session.user.id)
               .eq("is_superadmin", true)
               .limit(1);
+
+            if (saError) {
+              console.error("[AuthStore] Superadmin check error:", saError);
+            }
 
             const isSuperadmin = superadminCheck && superadminCheck.length > 0;
 
@@ -126,8 +149,18 @@ export const useAuthStore = create<AuthState>()(
                 )
                 .eq("user_id", session.user.id);
 
+              console.log(
+                "[AuthStore] Team members result:",
+                teamMembers?.length,
+                "error:",
+                teamError,
+              );
+
               if (teamError) {
-                console.error("Error fetching team members:", teamError);
+                console.error(
+                  "[AuthStore] Error fetching team members:",
+                  teamError,
+                );
                 // On error, still mark as authenticated but with no org
                 // This prevents redirect loops
                 set({
