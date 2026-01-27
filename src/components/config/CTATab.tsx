@@ -170,6 +170,77 @@ export function CTATab({ form }: CTATabProps) {
 
         <Separator />
 
+        {/* Direct Purchase CTA */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Direct Purchase CTA</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Alternative CTA when lead declines to speak with a manager
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <FormField
+              control={form.control}
+              name="cta_settings.purchase_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://emcd.io" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Direct link where leads can purchase equipment without
+                    manager contact
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cta_settings.purchase_cta_ru"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase CTA Message (Russian)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Без проблем! Вы можете приобрести оборудование напрямую по ссылке..."
+                      className="min-h-[80px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Message when lead doesn't want to talk to manager. Leave
+                    empty for default.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cta_settings.purchase_cta_en"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase CTA Message (English)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="No problem! You can purchase equipment directly at..."
+                      className="min-h-[80px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Separator />
+
         {/* BANT Qualification */}
         <Card>
           <CardHeader>

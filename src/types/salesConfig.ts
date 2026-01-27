@@ -56,6 +56,10 @@ export interface CTASettings {
   max_iterations_before_cta: number; // How many exchanges before offering CTA
   offer_call_types: ("phone" | "google_meet" | "zoom" | "whatsapp")[];
   follow_up_hours: number; // "colleague will contact within X hours"
+  // Direct purchase CTA when lead declines manager contact
+  purchase_url?: string; // Direct purchase link for self-service
+  purchase_cta_ru?: string; // CTA message when lead declines manager (Russian)
+  purchase_cta_en?: string; // CTA message when lead declines manager (English)
 }
 
 // BANT qualification model
@@ -319,6 +323,9 @@ export const DEFAULT_SALES_CONFIG: Omit<
     max_iterations_before_cta: 5,
     offer_call_types: ["phone", "google_meet", "zoom", "whatsapp"],
     follow_up_hours: 24,
+    purchase_url: "",
+    purchase_cta_ru: "",
+    purchase_cta_en: "",
   },
   bant_qualification: {
     need: {
