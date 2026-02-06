@@ -67,37 +67,44 @@ const configSchema = z.object({
   }),
   system_prompt_template: z.string().optional(),
   english_addon_template: z.string().optional(),
-  // Sales team configuration
+  // Sales team configuration (DB returns null for missing fields)
   sales_reps: z
     .array(
       z
         .object({
-          id: z.string().optional().default(""),
-          name: z.string().optional().default(""),
-          email: z.string().optional().default(""),
-          timezone_regions: z.array(z.string()).optional().default([]),
+          id: z.string().nullable().optional().default(""),
+          name: z.string().nullable().optional().default(""),
+          email: z.string().nullable().optional().default(""),
+          timezone_regions: z
+            .array(z.string())
+            .nullable()
+            .optional()
+            .default([]),
           working_hours: z
             .object({
-              start: z.string().optional().default("09:00"),
-              end: z.string().optional().default("18:00"),
+              start: z.string().nullable().optional().default("09:00"),
+              end: z.string().nullable().optional().default("18:00"),
             })
+            .nullable()
             .optional(),
-          calendar_id: z.string().optional(),
+          calendar_id: z.string().nullable().optional(),
         })
         .passthrough(),
     )
+    .nullable()
     .optional()
     .default([]),
-  // HubSpot integration
+  // HubSpot integration (DB returns null for unset fields)
   hubspot_integration: z
     .object({
-      enabled: z.boolean().optional().default(false),
-      api_key: z.string().optional().default(""),
-      sync_as_unqualified: z.boolean().optional().default(true),
-      pipeline_id: z.string().optional().default(""),
-      stage_id: z.string().optional().default(""),
+      enabled: z.boolean().nullable().optional().default(false),
+      api_key: z.string().nullable().optional().default(""),
+      sync_as_unqualified: z.boolean().nullable().optional().default(true),
+      pipeline_id: z.string().nullable().optional().default(""),
+      stage_id: z.string().nullable().optional().default(""),
     })
     .passthrough()
+    .nullable()
     .optional()
     .default({ enabled: false, sync_as_unqualified: true }),
   // CTA settings
