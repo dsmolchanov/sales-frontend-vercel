@@ -3,6 +3,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Save, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -277,15 +278,16 @@ export function AgentConfigPage() {
 
     try {
       await saveConfig(organization.id, data);
+      toast.success("Configuration saved");
     } catch {
-      // Error handled in store
+      toast.error("Failed to save configuration");
     }
   };
 
   const onValidationError = (errors: FieldErrors<SalesConfigFormData>) => {
     const messages = formatValidationErrors(errors);
     setValidationErrors(messages);
-    console.error("Form validation errors:", errors);
+    toast.error(`Validation errors: ${messages.join(", ")}`);
   };
 
   if (isLoading) {
