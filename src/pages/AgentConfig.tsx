@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Save } from "lucide-react";
+import { Save, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,12 +161,35 @@ const configSchema = z.object({
     .optional(),
   // Greeting messages
   greeting_messages: z.record(z.string()).optional(),
+  // HITL settings
+  hitl_auto_release_hours: z.number().min(1).max(168).optional(),
 });
+
+function formatValidationErrors(
+  errors: FieldErrors<SalesConfigFormData>,
+): string[] {
+  const messages: string[] = [];
+  for (const [key, value] of Object.entries(errors)) {
+    if (
+      value &&
+      typeof value === "object" &&
+      "message" in value &&
+      value.message
+    ) {
+      messages.push(`${key}: ${value.message}`);
+    } else if (value && typeof value === "object") {
+      // Nested object errors
+      messages.push(`${key}: invalid value`);
+    }
+  }
+  return messages;
+}
 
 export function AgentConfigPage() {
   const { organization, user } = useAuthStore();
   const { config, isLoading, isSaving, fetchConfig, saveConfig, error } =
     useSalesConfigStore();
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const form = useForm<SalesConfigFormData>({
     resolver: zodResolver(configSchema),
@@ -233,18 +256,26 @@ export function AgentConfigPage() {
           bot_disclosure_message_ru: "",
         },
         greeting_messages: config.greeting_messages || { ru: "", en: "" },
+        hitl_auto_release_hours: config.hitl_auto_release_hours ?? 24,
       });
     }
   }, [config, form]);
 
   const onSubmit = async (data: SalesConfigFormData) => {
     if (!organization?.id) return;
+    setValidationErrors([]);
 
     try {
       await saveConfig(organization.id, data);
     } catch {
       // Error handled in store
     }
+  };
+
+  const onValidationError = (errors: FieldErrors<SalesConfigFormData>) => {
+    const messages = formatValidationErrors(errors);
+    setValidationErrors(messages);
+    console.error("Form validation errors:", errors);
   };
 
   if (isLoading) {
@@ -267,7 +298,7 @@ export function AgentConfigPage() {
           </p>
         </div>
         <Button
-          onClick={form.handleSubmit(onSubmit)}
+          onClick={form.handleSubmit(onSubmit, onValidationError)}
           disabled={isSaving}
           className="gap-2"
         >
@@ -276,10 +307,25 @@ export function AgentConfigPage() {
         </Button>
       </div>
 
-      {error && (
+      {(error || validationErrors.length > 0) && (
         <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive">{error}</p>
+          <CardContent className="pt-6 space-y-1">
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            {validationErrors.length > 0 && (
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">
+                    Validation errors:
+                  </p>
+                  <ul className="text-sm text-destructive list-disc list-inside">
+                    {validationErrors.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

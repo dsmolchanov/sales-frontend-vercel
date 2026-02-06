@@ -230,5 +230,11 @@ export function getDefaultConfig(
       bot_disclosure_message_en:
         "Hi! I'm a sales assistant bot. I can answer questions about the product and help schedule a call with a manager.",
     },
+
+    // Greeting messages
+    greeting_messages: { ru: "", en: "" },
+
+    // HITL settings
+    hitl_auto_release_hours: 24,
   };
 }
