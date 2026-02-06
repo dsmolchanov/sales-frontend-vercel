@@ -70,33 +70,36 @@ const configSchema = z.object({
   // Sales team configuration
   sales_reps: z
     .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        email: z.string().email().optional().or(z.literal("")),
-        timezone_regions: z.array(
-          z.enum(["RU", "US_CANADA", "AUSTRALIA_NZ", "EU", "ASIA"]),
-        ),
-        working_hours: z
-          .object({
-            start: z.string(),
-            end: z.string(),
-          })
-          .optional(),
-        calendar_id: z.string().optional(),
-      }),
+      z
+        .object({
+          id: z.string().optional().default(""),
+          name: z.string().optional().default(""),
+          email: z.string().optional().default(""),
+          timezone_regions: z.array(z.string()).optional().default([]),
+          working_hours: z
+            .object({
+              start: z.string().optional().default("09:00"),
+              end: z.string().optional().default("18:00"),
+            })
+            .optional(),
+          calendar_id: z.string().optional(),
+        })
+        .passthrough(),
     )
-    .optional(),
+    .optional()
+    .default([]),
   // HubSpot integration
   hubspot_integration: z
     .object({
-      enabled: z.boolean(),
-      api_key: z.string().optional(),
-      sync_as_unqualified: z.boolean(),
-      pipeline_id: z.string().optional(),
-      stage_id: z.string().optional(),
+      enabled: z.boolean().optional().default(false),
+      api_key: z.string().optional().default(""),
+      sync_as_unqualified: z.boolean().optional().default(true),
+      pipeline_id: z.string().optional().default(""),
+      stage_id: z.string().optional().default(""),
     })
-    .optional(),
+    .passthrough()
+    .optional()
+    .default({ enabled: false, sync_as_unqualified: true }),
   // CTA settings
   cta_settings: z
     .object({
