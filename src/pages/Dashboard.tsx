@@ -61,27 +61,29 @@ export function DashboardPage() {
       const leads = leadsResult.data || [];
       const calls = callsResult.data || [];
 
-      const newLeads = leads.filter((l) => l.status === "new").length;
-      const qualifiedLeads = leads.filter(
-        (l) => l.status === "qualified",
+      const totalLeads = leads.length;
+      const qualifiedScores = ["hot", "warm", "cold"];
+      const newLeads = leads.filter(
+        (l) => !qualifiedScores.includes(l.qualification_score),
       ).length;
-      const scheduledCalls = calls.filter(
-        (c) => c.status === "scheduled",
+      const qualifiedLeads = leads.filter((l) =>
+        qualifiedScores.includes(l.qualification_score),
       ).length;
       const convertedLeads = leads.filter(
-        (l) => l.status === "converted",
+        (l) => l.status === "converted" || l.status === "scheduled",
       ).length;
-      const totalLeads = leads.length;
+      const todayCalls = calls.filter((c) =>
+        c.scheduled_at?.startsWith(new Date().toISOString().split("T")[0]),
+      ).length;
 
       setMetrics({
         newLeadsCount: newLeads,
         qualifiedLeadsCount: qualifiedLeads,
-        scheduledCallsCount: scheduledCalls,
+        scheduledCallsCount: calls.filter((c) => c.status === "scheduled")
+          .length,
         conversionRate:
           totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0,
-        todayCallsCount: calls.filter((c) =>
-          c.scheduled_at.startsWith(new Date().toISOString().split("T")[0]),
-        ).length,
+        todayCallsCount: todayCalls,
       });
 
       // Fetch recent leads
