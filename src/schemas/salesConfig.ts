@@ -130,7 +130,7 @@ export const salesRepAvailabilitySchema = z.object({
       end: z.string(),
     })
     .optional(),
-  calendar_id: z.string().optional(),
+  calendar_id: z.string().nullable().optional(),
 });
 
 // =============================================================================
