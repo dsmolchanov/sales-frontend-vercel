@@ -215,7 +215,7 @@ export function TeamManagementPage() {
   const fetchOrganizations = async () => {
     try {
       const { data, error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("organizations")
         .select("id, name")
         .order("name");
@@ -232,7 +232,7 @@ export function TeamManagementPage() {
     setIsLoadingInvitations(true);
     try {
       let query = supabase
-        .schema("sales")
+        .schema("agents")
         .from("staff_invitations")
         .select("*")
         .order("invited_at", { ascending: false });

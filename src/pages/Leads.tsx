@@ -90,7 +90,7 @@ export function LeadsPage() {
           "postgres_changes",
           {
             event: "*",
-            schema: "sales",
+            schema: "agents",
             table: "conversation_sessions",
             filter: `organization_id=eq.${organization.id}`,
           },
@@ -111,10 +111,11 @@ export function LeadsPage() {
     if (!organization?.id) return;
     try {
       const { data } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("organization_configs")
         .select("hitl_auto_release_hours")
         .eq("organization_id", organization.id)
+        .eq("agent_type", "sales")
         .single();
       if (data?.hitl_auto_release_hours) {
         setAutoReleaseHours(data.hitl_auto_release_hours);
@@ -131,7 +132,7 @@ export function LeadsPage() {
     try {
       // Fetch ALL sessions first (to catch orphan sessions without leads)
       const { data: allSessionsData } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("conversation_sessions")
         .select("*")
         .eq("organization_id", organization.id)
@@ -258,7 +259,7 @@ export function LeadsPage() {
     try {
       const now = new Date().toISOString();
       const { error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("conversation_sessions")
         .update({
           control_mode: "human",
@@ -292,7 +293,7 @@ export function LeadsPage() {
     setIsActionLoading(true);
     try {
       const { error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("conversation_sessions")
         .update({
           control_mode: "agent",
@@ -327,7 +328,7 @@ export function LeadsPage() {
     try {
       const now = new Date().toISOString();
       const { error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("conversation_sessions")
         .update({
           escalated_at: now,
@@ -369,7 +370,7 @@ export function LeadsPage() {
 
       // 1. Delete conversation_sessions by phone
       const { error: sessionsError, count: sessionsCount } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("conversation_sessions")
         .delete({ count: "exact" })
         .eq("phone", phone)
@@ -386,7 +387,7 @@ export function LeadsPage() {
 
       // 2. Delete agent_sessions by lead_phone
       const { error: agentSessionsError, count: agentCount } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("agent_sessions")
         .delete({ count: "exact" })
         .eq("lead_phone", phone);
@@ -403,7 +404,7 @@ export function LeadsPage() {
       // 3. Delete conversation_messages (if any exist)
       if (leadToDelete.session?.id) {
         const { count: msgCount } = await supabase
-          .schema("sales")
+          .schema("agents")
           .from("conversation_messages")
           .delete({ count: "exact" })
           .eq("session_id", leadToDelete.session.id);

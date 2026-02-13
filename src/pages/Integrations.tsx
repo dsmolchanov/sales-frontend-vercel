@@ -480,7 +480,7 @@ function GoogleCalendarTab() {
 
         // Step 1: Find team for this organization
         const { data: team } = await supabase
-          .schema("sales")
+          .schema("agents")
           .from("teams")
           .select("id")
           .eq("organization_id", organization.id)

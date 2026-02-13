@@ -32,10 +32,11 @@ export const useSalesConfigStore = create<SalesConfigState>((set, get) => ({
       set({ isLoading: true, error: null });
 
       const { data, error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("organization_configs")
         .select("*")
         .eq("organization_id", organizationId)
+        .eq("agent_type", "sales")
         .single();
 
       if (error && error.code !== "PGRST116") {
@@ -68,7 +69,7 @@ export const useSalesConfigStore = create<SalesConfigState>((set, get) => ({
       if (existingConfig) {
         // Update existing config
         const { data: updated, error } = await supabase
-          .schema("sales")
+          .schema("agents")
           .from("organization_configs")
           .update({
             ...data,
@@ -87,10 +88,11 @@ export const useSalesConfigStore = create<SalesConfigState>((set, get) => ({
       } else {
         // Create new config
         const { data: created, error } = await supabase
-          .schema("sales")
+          .schema("agents")
           .from("organization_configs")
           .insert({
             organization_id: organizationId,
+            agent_type: "sales",
             ...data,
           })
           .select()

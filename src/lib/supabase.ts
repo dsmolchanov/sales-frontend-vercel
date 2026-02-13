@@ -141,7 +141,7 @@ export const checkAndProvisionTenant = async (
 ) => {
   // Check if user already has an organization
   const { data: existingMember } = await supabase
-    .schema("sales")
+    .schema("agents")
     .from("team_members")
     .select("organization_id")
     .eq("user_id", userId)

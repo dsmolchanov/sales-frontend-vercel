@@ -103,7 +103,7 @@ export function SignupPage() {
     const fetchTemplates = async () => {
       try {
         const { data, error } = await supabase
-          .schema("sales")
+          .schema("agents")
           .from("organization_templates")
           .select("id, name, slug, industry, description")
           .eq("is_active", true)

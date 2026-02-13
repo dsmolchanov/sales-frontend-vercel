@@ -61,7 +61,7 @@ export function ConversationSection({
         "postgres_changes",
         {
           event: "*",
-          schema: "sales",
+          schema: "agents",
           table: "agent_sessions",
           filter: `lead_phone=eq.${session.phone}`,
         },
@@ -122,7 +122,7 @@ export function ConversationSection({
       // Messages are stored in agent_sessions.messages JSONB array
       // Link is via lead_phone matching conversation_sessions.phone
       const { data, error } = await supabase
-        .schema("sales")
+        .schema("agents")
         .from("agent_sessions")
         .select("messages")
         .eq("lead_phone", session.phone)

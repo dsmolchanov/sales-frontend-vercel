@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
 
             // First check if user is a superadmin
             const { data: superadminCheck, error: saError } = await supabase
-              .schema("sales")
+              .schema("agents")
               .from("team_members")
               .select("id, is_superadmin")
               .eq("user_id", session.user.id)
@@ -90,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
             if (isSuperadmin) {
               // Superadmin: fetch ALL organizations
               const { data: allOrgs, error: orgsError } = await supabase
-                .schema("sales")
+                .schema("agents")
                 .from("organizations")
                 .select(
                   "id, name, slug, owner_id, settings, created_at, updated_at",
@@ -130,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
             } else {
               // Regular user: fetch only their memberships
               const { data: teamMembers, error: teamError } = await supabase
-                .schema("sales")
+                .schema("agents")
                 .from("team_members")
                 .select(
                   `
@@ -317,7 +317,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const { data, error } = await supabase
-            .schema("sales")
+            .schema("agents")
             .from("teams")
             .select("id, name, description, color")
             .eq("organization_id", selectedOrgId)

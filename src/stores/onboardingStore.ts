@@ -126,7 +126,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         try {
           // Fetch onboarding progress from database
           const { data, error } = await supabase
-            .schema("sales")
+            .schema("agents")
             .from("onboarding_progress")
             .select("progress, step_data")
             .eq("organization_id", organizationId)
@@ -361,7 +361,7 @@ export const useOnboardingStore = create<OnboardingState>()(
 
         try {
           await supabase
-            .schema("sales")
+            .schema("agents")
             .from("onboarding_progress")
             .update({
               step_data: stepData,
