@@ -19,6 +19,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Shield,
   Building2,
   Users,
@@ -36,6 +47,10 @@ import {
   WifiOff,
   RefreshCw,
   Clock,
+  Inbox,
+  SkipForward,
+  Rewind,
+  ArrowRightLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuthStore } from "@/stores/authStore";
@@ -57,6 +72,19 @@ async function apiFetch<T>(path: string): Promise<T> {
   return res.json();
 }
 
+async function apiPost<T>(path: string): Promise<T> {
+  const token = await getAccessToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
 // ============== Shared ==============
 
 const STATUS_COLORS: Record<string, string> = {
@@ -68,6 +96,7 @@ const STATUS_COLORS: Record<string, string> = {
   healthy: "bg-green-100 text-green-800",
   degraded: "bg-yellow-100 text-yellow-800",
   critical: "bg-red-100 text-red-800",
+  unhealthy: "bg-red-100 text-red-800",
   offline: "bg-gray-100 text-gray-800",
 };
 
@@ -604,6 +633,247 @@ function OrgDetailDialog({
   );
 }
 
+// ============== Message Queue Section ==============
+
+function StreamActionButton({
+  action,
+  label,
+  icon: Icon,
+  description,
+  variant = "default",
+  onExecute,
+  isPending,
+}: {
+  action: string;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+  variant?: "default" | "destructive";
+  onExecute: (action: string) => void;
+  isPending: boolean;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <button
+          disabled={isPending}
+          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md border transition-colors disabled:opacity-50 ${
+            variant === "destructive"
+              ? "border-red-200 text-red-700 hover:bg-red-50"
+              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Icon className="w-4 h-4" />
+          )}
+          {label}
+        </button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{label}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => onExecute(action)}>
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function MessageQueueSection() {
+  const [streamData, setStreamData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionPending, setActionPending] = useState(false);
+  const [lastResult, setLastResult] = useState<string | null>(null);
+
+  const fetchHealth = () => {
+    setIsLoading(true);
+    apiFetch<any>("/admin/streams/health")
+      .then(setStreamData)
+      .catch(() => setStreamData(null))
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchHealth();
+  }, []);
+
+  const handleAction = (action: string) => {
+    setActionPending(true);
+    setLastResult(null);
+    apiPost<any>(`/admin/streams/${action}`)
+      .then((data) => {
+        setLastResult(data.message);
+        fetchHealth();
+      })
+      .catch((err) => setLastResult(`Error: ${err.message}`))
+      .finally(() => setActionPending(false));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Inbox className="w-5 h-5 text-blue-500" />
+            Message Queue
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {streamData && <StatusBadge status={streamData.status} />}
+            <button
+              onClick={fetchHealth}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">
+              Loading queue data...
+            </span>
+          </div>
+        ) : streamData ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold">{streamData.queue_depth}</p>
+                <p className="text-xs text-muted-foreground">Queue Depth</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p
+                  className={`text-2xl font-bold ${streamData.dlq_depth > 0 ? "text-red-600" : ""}`}
+                >
+                  {streamData.dlq_depth}
+                </p>
+                <p className="text-xs text-muted-foreground">DLQ Depth</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p
+                  className={`text-2xl font-bold ${streamData.consumers_count === 0 ? "text-red-600" : ""}`}
+                >
+                  {streamData.consumers_count}
+                </p>
+                <p className="text-xs text-muted-foreground">Consumers</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p
+                  className={`text-2xl font-bold ${streamData.pending > 0 ? "text-yellow-600" : ""}`}
+                >
+                  {streamData.pending}
+                </p>
+                <p className="text-xs text-muted-foreground">Pending</p>
+              </div>
+            </div>
+
+            {streamData.consumers?.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Active Consumers
+                </h4>
+                <div className="space-y-1">
+                  {streamData.consumers.map((consumer: any) => (
+                    <div
+                      key={consumer.name}
+                      className="flex items-center justify-between text-sm bg-muted/50 rounded px-3 py-2"
+                    >
+                      <span className="font-mono text-xs truncate max-w-[200px]">
+                        {consumer.name}
+                      </span>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span>{consumer.pending} pending</span>
+                        <span>idle {consumer.idle_seconds}s</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {streamData.issues?.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-yellow-800 mb-1">
+                  Issues Detected
+                </h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  {streamData.issues.map((issue: string, i: number) => (
+                    <li key={i} className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                      {issue.replace(/_/g, " ")}
+                    </li>
+                  ))}
+                </ul>
+                {streamData.recommendations?.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-yellow-200">
+                    <p className="text-xs text-yellow-600">
+                      {streamData.recommendations.join(" | ")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {lastResult && (
+              <div
+                className={`text-sm rounded-lg px-3 py-2 ${
+                  lastResult.startsWith("Error")
+                    ? "bg-red-50 text-red-700"
+                    : "bg-green-50 text-green-700"
+                }`}
+              >
+                {lastResult}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
+              <StreamActionButton
+                action="reset-to-latest"
+                label="Reset to Latest"
+                icon={SkipForward}
+                description="Skip all existing messages and only process new messages going forward. Use this to clear backlogs."
+                onExecute={handleAction}
+                isPending={actionPending}
+              />
+              <StreamActionButton
+                action="reset-to-begin"
+                label="Reset to Begin"
+                icon={Rewind}
+                description="Reprocess all messages from the beginning. Messages will be redelivered — this relies on idempotency to avoid duplicates."
+                variant="destructive"
+                onExecute={handleAction}
+                isPending={actionPending}
+              />
+              <StreamActionButton
+                action="claim-pending-to-worker"
+                label="Claim Pending"
+                icon={ArrowRightLeft}
+                description="Claim all pending messages from idle or dead consumers and assign them to an active worker for processing."
+                onExecute={handleAction}
+                isPending={actionPending}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-4">
+            Unable to load queue data
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ============== System Health Tab ==============
 
 function SystemHealthTab() {
@@ -662,6 +932,9 @@ function SystemHealthTab() {
           </div>
         )}
       </div>
+
+      {/* Message Queue */}
+      <MessageQueueSection />
 
       <Card>
         <CardHeader>
