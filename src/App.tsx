@@ -22,6 +22,7 @@ import { ResetPasswordPage } from "@/pages/ResetPassword";
 import { SignupPage } from "@/pages/Signup";
 import { OnboardingPage } from "@/pages/Onboarding";
 import { AuthCallbackPage } from "@/pages/AuthCallback";
+import { PlatformAdminPage } from "@/pages/PlatformAdmin";
 
 // Protected route wrapper
 function ProtectedRoute() {
@@ -108,6 +109,7 @@ export default function App() {
                 element={<Navigate to="/team" replace />}
               />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/platform" element={<PlatformAdminPage />} />
             </Route>
           </Route>
 

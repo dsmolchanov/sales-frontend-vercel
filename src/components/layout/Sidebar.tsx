@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Plug,
   UserPlus,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,12 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuthStore();
 
-  const navigation = baseNavigation;
+  const navigation = [
+    ...baseNavigation,
+    ...(user?.is_superadmin
+      ? [{ name: "Platform", href: "/platform", icon: Shield }]
+      : []),
+  ];
 
   return (
     <aside
