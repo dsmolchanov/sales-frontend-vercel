@@ -63,7 +63,7 @@ export function ConversationSection({
           event: "*",
           schema: "agents",
           table: "agent_sessions",
-          filter: `lead_phone=eq.${session.phone}`,
+          filter: `contact_phone=eq.${session.phone}`,
         },
         () => {
           fetchMessages();
@@ -120,12 +120,12 @@ export function ConversationSection({
     if (!session?.phone) return;
     try {
       // Messages are stored in agent_sessions.messages JSONB array
-      // Link is via lead_phone matching conversation_sessions.phone
+      // Link is via contact_phone matching conversation_sessions.phone
       const { data, error } = await supabase
         .schema("agents")
         .from("agent_sessions")
         .select("messages")
-        .eq("lead_phone", session.phone)
+        .eq("contact_phone", session.phone)
         .order("updated_at", { ascending: false })
         .limit(1)
         .single();
